@@ -22,8 +22,12 @@ code block, with its first occurrence's ctrl/glslc), summary.txt. The blocks the
   * files: code/<h>.bin, ctrl/<h>.bin, glslc/<h>.bin (whole GLSLC outputs), for the tools that read single blocks
     (ampere/oracle/sass_oracle.py, scripts/check_mufu_trig.py, ampere/decoder/tool: sassdecode).
 Deterministic: files and entries are visited in sorted order; "first occurrence" is in that order.
+--programs FILE: the graphics programs, for the runtime's shader preparation (pkp --prepare-shaders, read_programs_file in
+runtime/src/gfx/nvn/nvn_gpl.cpp): "MPRPRG01", u32 count, u32 0, then per program u64 vertex, fragment, geometry (0 if none) code
+hashes, the 16 hex of the block names as numbers. A program is one GLSLC output: the code sections of one output are the stages one
+glslcCompile made together, the shaders nvnProgramSetShaders gets.
 Usage: python -I extract_corpus.py --romfs <romfs> [--romfs-base <base romfs>] [--main <main.elf>] --out <dir> [--jobs 4]
-                                   [--layout packs|files]
+                                   [--layout packs|files] [--programs <file>]
   --romfs-base: the base game's romfs under an update's (the update's files win), for an update dumped without the base game's files
 """
 import argparse, collections, hashlib, mmap, os, struct, sys, threading, zlib
@@ -261,6 +265,36 @@ def scan_main(path, out, nn, layout):
         s.close()
 
 
+PROGRAMS_MAGIC = b'MPRPRG01'
+PROGRAM_STAGES = {'vs', 'ps', 'gs'}
+
+
+def program_list(results):
+    """(vertex, fragment, geometry or 0) code hashes of every distinct graphics program, sorted. The occurrences of one GLSLC
+    output share (source, entry offset, output offset). An output with a stage the preparation cannot build (tessellation,
+    compute), without both a vertex and a fragment stage, or with one stage twice is left out."""
+    outputs = collections.defaultdict(list)
+    for res in results:
+        for name, eo, _fk, _tk, _tag, go, _si, st, _cn, _kn, h, _ch, _gh, _refs in res:
+            outputs[(name, eo, go)].append((st, h))
+    progs = set()
+    for stages in outputs.values():
+        by = dict(stages)
+        if len(by) != len(stages) or not by.keys() <= PROGRAM_STAGES or not {'vs', 'ps'} <= by.keys():
+            continue
+        progs.add((int(by['vs'], 16), int(by['ps'], 16), int(by['gs'], 16) if 'gs' in by else 0))
+    return sorted(progs)
+
+
+def write_programs(path, progs):
+    """The program list file (see the header), written next to its final name first so a stopped run leaves no half list."""
+    tmp = path + '.new'
+    with open(tmp, 'wb') as f:
+        f.write(PROGRAMS_MAGIC + struct.pack('<II', len(progs), 0))
+        f.write(b''.join(struct.pack('<QQQ', *p) for p in progs))
+    os.replace(tmp, path)
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--romfs', required=True)
@@ -270,6 +304,7 @@ def main():
     ap.add_argument('--jobs', type=int, default=4)
     ap.add_argument('--layout', choices=('packs', 'files'), default='packs', help='how the blocks are written (see above)')
     ap.add_argument('--progress', action='store_true', help='print "done: <file>", "scan: <done> <total>" and, while a file takes long, "running: <file> ..." lines')
+    ap.add_argument('--programs', help='also write the graphics program list here, for pkp --prepare-shaders (see above)')
     a = ap.parse_args()
     by_rel = {}   # path below motor_asset_re -> host path; the update's (--romfs) files win over the base game's
     for top in [a.romfs] + ([a.romfs_base] if a.romfs_base else []):
@@ -338,6 +373,10 @@ def main():
         s.append(f'  {st}: {by_all[st]} occurrences, {by_uni[st]} unique')
     s.append('ctrl sizes (unique code): ' + ', '.join(f'{k:#x}:{v}' for k, v in
                                                      sorted(collections.Counter(v[2] for v in seen.values()).items())))
+    if a.programs:
+        progs = program_list(results)
+        write_programs(a.programs, progs)
+        s.append(f'graphics programs {len(progs)}')
     open(os.path.join(a.out, 'summary.txt'), 'w', newline='\n').write('\n'.join(s) + '\n')
     print('\n'.join(s))
 
