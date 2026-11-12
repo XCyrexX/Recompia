@@ -17,7 +17,7 @@
 //! Compact storage (shader_archive.rs): when the cache has a shader archive, or a new setup asks for one (`Job::compact`), every chunk is
 //! moved into the archive as soon as it is committed, so the loose files never pile up. A cache of loose files stays loose until the
 //! player makes it smaller (main.rs compact_shaders).
-//! Its only crate-local imports are host.rs (with download.rs) and shader_archive.rs, so `examples/shader_setup.rs` can build them alone.
+//! Its only crate-local imports are host.rs (with download.rs), shader_archive.rs and shader_prepare.rs, so `examples/shader_setup.rs` can build them alone.
 
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
@@ -352,9 +352,11 @@ pub fn find_tools(tools_dir: &Path) -> Result<Tools, String> {
     Ok(Tools { python: python.unwrap(), extract, harness })
 }
 
-/// A progress line of a tool ("scan: 12 of 99", "  500/1000  3.2 s"): counted by the progress bar, not worth a log line.
+/// A progress line of a tool ("scan: 12 of 99", "  500/1000  3.2 s", "prepare: 192 98304"): counted by the progress bar, not worth a log line.
 fn is_progress_line(l: &str) -> bool {
-    l.starts_with("scan: ") || l.trim().split('/').next().map_or(false, |x| !x.is_empty() && x.bytes().all(|b| b.is_ascii_digit()) && l.contains('/'))
+    matches!(crate::shader_prepare::parse_line(l), Some(crate::shader_prepare::Line::Progress(..)))
+        || l.starts_with("scan: ")
+        || l.trim().split('/').next().map_or(false, |x| !x.is_empty() && x.bytes().all(|b| b.is_ascii_digit()) && l.contains('/'))
 }
 
 /// Runs a tool, handing each stdout line to `line`; kills it when `cancel` is set. Ok(true) = exit 0, Ok(false) = cancelled.
@@ -649,6 +651,7 @@ pub fn run(job: &Job, tools: &Tools, cancel: &AtomicBool, mut report: impl FnMut
         let _ = fs::remove_file(corpus.join("unique.tsv"));
         let mut cmd = crate::host::command(&tools.python);
         cmd.arg("-I").arg("-B").arg(&tools.extract).arg("--romfs").arg(&job.romfs).arg("--main").arg(&job.main).arg("--out").arg(&corpus);
+        cmd.arg("--programs").arg(crate::shader_prepare::programs_file(&job.game_dir));
         if let Some(b) = &job.romfs_base {
             cmd.arg("--romfs-base").arg(b);
         }

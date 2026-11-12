@@ -63,6 +63,12 @@ pub fn runtime_lib_rel() -> &'static str {
     }
 }
 
+/// Whether Set up prepares the game's shaders ahead (shader_prepare.rs): the game compiles pipeline-library parts
+/// (VK_EXT_graphics_pipeline_library), which MoltenVK on macOS does not offer, so there it would only ever fail.
+pub fn prepares_shaders() -> bool {
+    !cfg!(target_os = "macos")
+}
+
 /// The decoder libraries pkp_rt.dll loads at run time next to the game (astcdec-*-shared.dll). macOS samples ASTC in Metal and
 /// Linux decodes with the astcenc that is linked into the runtime, so only Windows has them.
 pub fn has_decoder_dlls() -> bool {
@@ -376,6 +382,8 @@ pub fn native_set_up(
         .arg(Path::new(&exefs).join("main"))
         .arg("--out")
         .arg(&corpus)
+        .arg("--programs")
+        .arg(crate::shader_prepare::programs_file(game_dir))
         .args(["--jobs", "4"])
         .output()
         .map_err(|e| format!("could not run the corpus extractor: {}", e))?;
@@ -397,7 +405,7 @@ pub fn native_set_up(
         progress("translate", blocks as u64, blocks as u64, "Every shader is translated already.");
         warm_up_run(game_dir, cancel, progress);
         crate::shaders::mark_complete(game_dir, &romfs.to_string_lossy(), blocks)?;
-        return Ok(blocks);
+        return prepare_run(game_dir, cancel, progress).map(|_| blocks);
     }
 
     progress("translate", 0, blocks as u64, &format!("Translating {} shaders...", blocks));
@@ -464,7 +472,17 @@ pub fn native_set_up(
     let _ = reader.join();
     warm_up_run(game_dir, cancel, progress);
     crate::shaders::mark_complete(game_dir, &romfs.to_string_lossy(), blocks)?;
-    Ok(blocks)
+    prepare_run(game_dir, cancel, progress).map(|_| blocks)
+}
+
+/// The shader preparation (shader_prepare.rs) as the last phase of this Set up, after the cache is marked complete: a pause there
+/// is "Setup paused." as in the game build, a failure only a message.
+fn prepare_run(game_dir: &Path, cancel: &std::sync::atomic::AtomicBool, progress: &mut dyn FnMut(&str, u64, u64, &str)) -> Result<(), String> {
+    if crate::shader_prepare::set_up_phase(game_dir, cancel, false, None, progress) {
+        Ok(())
+    } else {
+        Err("Setup paused.".into())
+    }
 }
 
 /// The warm-up as Set up reports it: a phase of its own, and a failure is only a message (the first Play then collects the

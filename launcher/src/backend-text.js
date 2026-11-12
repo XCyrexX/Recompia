@@ -100,6 +100,13 @@ const TEXTS = [
   msg('Setup is already running.'),
   msg('Checking the setup tools...'),
   msg('Running the game once in the background to collect the shaders it builds while it runs (about {n1} s)...'),
+  // shader_prepare.rs: the last Set up phase
+  msg('Preparing the shaders for your graphics card...'),
+  msg('Preparing the shaders for your graphics card: {n1} of {n2}'),
+  msg('The shaders are prepared for this graphics card already.'),
+  msg('The shaders are prepared for your graphics card.'),
+  msg('No shader list to prepare from yet: the game compiles its shaders while it runs.'),
+  msg('The shaders could not be prepared ahead: {1}. The game compiles them while it runs, as before.'),
   msg('Setup paused. Set up again continues where it stopped.'),
   msg('There is no setup log yet: it is written when Set up starts.'),
 

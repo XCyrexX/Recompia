@@ -55,6 +55,7 @@ mod settings_cmds;
 mod setup_job;
 mod setuplog;
 mod shader_archive;
+mod shader_prepare;
 mod shaders;
 mod steam;
 mod steam_cmds;

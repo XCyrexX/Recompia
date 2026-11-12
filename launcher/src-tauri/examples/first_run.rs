@@ -41,6 +41,11 @@ mod settings;
 #[allow(dead_code)]
 #[path = "../src/shader_archive.rs"]
 mod shader_archive;
+
+#[allow(dead_code)]
+#[path = "../src/shader_prepare.rs"]
+mod shader_prepare;
+
 #[allow(dead_code)]
 #[path = "../src/shaders.rs"]
 mod shaders;
