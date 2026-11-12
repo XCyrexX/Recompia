@@ -340,13 +340,15 @@ pub fn native_set_up_install(
             }
         }
     }
-    native_set_up(&dir, cancel, progress)
+    native_set_up(&dir, !cfg.skip_shader_prepare, cancel, progress)
 }
 
 /// Linux and macOS: extract the game's shader corpus from its RomFS (extract_corpus.py) and translate every block
-/// (spirv_harness), then mark the cache complete. The game build is `native_set_up_install`'s step, before this one.
+/// (spirv_harness), then mark the cache complete, then prepare the shaders for this GPU when `prepare` (config skip_shader_prepare off).
+/// The game build is `native_set_up_install`'s step, before this one.
 pub fn native_set_up(
     game_dir: &Path,
+    prepare: bool,
     cancel: &std::sync::atomic::AtomicBool,
     progress: &mut dyn FnMut(&str, u64, u64, &str),
 ) -> Result<usize, String> {
@@ -405,7 +407,7 @@ pub fn native_set_up(
         progress("translate", blocks as u64, blocks as u64, "Every shader is translated already.");
         warm_up_run(game_dir, cancel, progress);
         crate::shaders::mark_complete(game_dir, &romfs.to_string_lossy(), blocks)?;
-        return prepare_run(game_dir, cancel, progress).map(|_| blocks);
+        return prepare_run(game_dir, prepare, cancel, progress).map(|_| blocks);
     }
 
     progress("translate", 0, blocks as u64, &format!("Translating {} shaders...", blocks));
@@ -472,13 +474,13 @@ pub fn native_set_up(
     let _ = reader.join();
     warm_up_run(game_dir, cancel, progress);
     crate::shaders::mark_complete(game_dir, &romfs.to_string_lossy(), blocks)?;
-    prepare_run(game_dir, cancel, progress).map(|_| blocks)
+    prepare_run(game_dir, prepare, cancel, progress).map(|_| blocks)
 }
 
-/// The shader preparation (shader_prepare.rs) as the last phase of this Set up, after the cache is marked complete: a pause there
-/// is "Setup paused." as in the game build, a failure only a message.
-fn prepare_run(game_dir: &Path, cancel: &std::sync::atomic::AtomicBool, progress: &mut dyn FnMut(&str, u64, u64, &str)) -> Result<(), String> {
-    if crate::shader_prepare::set_up_phase(game_dir, cancel, false, None, progress) {
+/// The shader preparation (shader_prepare.rs) as the last phase of this Set up when `prepare`, after the cache is marked complete:
+/// a pause there is "Setup paused." as in the game build, a failure only a message.
+fn prepare_run(game_dir: &Path, prepare: bool, cancel: &std::sync::atomic::AtomicBool, progress: &mut dyn FnMut(&str, u64, u64, &str)) -> Result<(), String> {
+    if !prepare || crate::shader_prepare::set_up_phase(game_dir, cancel, false, None, progress) {
         Ok(())
     } else {
         Err("Setup paused.".into())

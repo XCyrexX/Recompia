@@ -24,6 +24,9 @@ pub struct Config {
     /// A new setup keeps its translated shaders as ~99,000 loose files (the old storage) instead of the shader archive. Only read when
     /// a setup starts with no translated shader yet (shaders.rs Job::compact). Loose storage is on its way out.
     pub loose_shaders: bool,
+    /// Set up leaves out its last phase, preparing the shaders for this GPU (shader_prepare.rs): a shorter Set up, and the game compiles
+    /// them while it runs instead. Off, so Set up prepares, unless the player switches the preparation off.
+    pub skip_shader_prepare: bool,
     /// Where the window was last time, on a desktop screen (logical pixels); none: the default size, centred
     pub window: Option<WindowPlace>,
     /// Which releases the launcher offers: "stable" (the default) or "testing" (prereleases built from the testing branch). update.rs Channel.
@@ -78,4 +81,17 @@ pub fn save_config(app: AppHandle, config: Config) -> Result<(), String> {
 pub fn store_config(app: &AppHandle, config: &Config) -> Result<(), String> {
     let text = serde_json::to_string_pretty(config).map_err(|e| e.to_string())?;
     settings::write_atomic(&config_path(app)?, &text).map_err(|e| format!("cannot save launcher settings: {}", e))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn shader_prepare_is_on_in_an_older_config() {
+        // a launcher.json written before the switch existed has no such key: Set up prepares
+        let c: Config = serde_json::from_str(r#"{"dump_dir":"D:/d","gentle_build":true}"#).unwrap();
+        assert!(!c.skip_shader_prepare);
+        assert!(!Config::default().skip_shader_prepare);
+    }
 }

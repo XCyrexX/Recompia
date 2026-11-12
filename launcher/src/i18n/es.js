@@ -269,6 +269,7 @@ export default {
   'Change': 'Cambiar',
   'Slower, keeps the PC usable': 'Más lento, mantiene la PC utilizable',
   'Packed shader files (about 20 GB smaller)': 'Archivos de shaders empaquetados (unos 20 GB menos)',
+  'Prepare shaders for this graphics card (less stutter, longer first setup)': 'Preparar los shaders para esta tarjeta gráfica (menos tirones, primera configuración más larga)',
   'Open setup log': 'Abrir el registro de configuración',
   'The launcher is not answering': 'El launcher no responde',
   'Choose your game files': 'Elige los archivos del juego',

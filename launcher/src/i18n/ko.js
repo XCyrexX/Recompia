@@ -269,6 +269,7 @@ export default {
   'Change': '변경',
   'Slower, keeps the PC usable': '느리지만 PC를 계속 사용할 수 있음',
   'Packed shader files (about 20 GB smaller)': '묶은 셰이더 파일(약 20 GB 절약)',
+  'Prepare shaders for this graphics card (less stutter, longer first setup)': '이 그래픽 카드용 셰이더 준비 (끊김 감소, 첫 설정이 더 오래 걸림)',
   'Open setup log': '설정 로그 열기',
   'The launcher is not answering': '런처가 응답하지 않습니다',
   'Choose your game files': '게임 파일을 선택하세요',

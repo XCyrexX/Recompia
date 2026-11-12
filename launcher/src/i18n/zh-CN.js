@@ -269,6 +269,7 @@ export default {
   'Change': '更改',
   'Slower, keeps the PC usable': '较慢，但仍可正常使用电脑',
   'Packed shader files (about 20 GB smaller)': '打包的着色器文件（约小 20 GB）',
+  'Prepare shaders for this graphics card (less stutter, longer first setup)': '为这块显卡准备着色器（减少卡顿，首次设置更久）',
   'Open setup log': '打开设置日志',
   'The launcher is not answering': '启动器没有响应',
   'Choose your game files': '选择你的游戏文件',

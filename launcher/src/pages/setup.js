@@ -85,6 +85,7 @@ const flow = {
   saved: '',         // config dump_dir
   gentle: false,
   small: true,       // a new setup keeps its shaders packed (config loose_shaders: false)
+  prepare: true,     // Set up ends by preparing the shaders for this GPU (config skip_shader_prepare: false)
   touched: false,    // the toggle was used: it beats preflight's suggestion
   changing: false,   // "Change": the choose panel over files that are fine
   again: false,      // "Set up again": the set up panel over a finished setup
@@ -191,6 +192,7 @@ async function loadSaved() {
     flow.saved = cfg.dump_dir || '';
     flow.gentle = !!cfg.gentle_build;
     flow.small = !cfg.loose_shaders;
+    flow.prepare = !cfg.skip_shader_prepare;
     paint?.();
     // a .nup is no folder: readiness read it, app.dump has what there is to say
     if (flow.saved && !/\.nup$/i.test(flow.saved) && !flow.checking && !store.state.nup) {
@@ -221,6 +223,13 @@ function saveSmall(on) {
       flow.need = undefined;   // packed shaders need far less free space: ask preflight again
       wantNeed();
     })
+    .catch((e) => toast(errText(e), 'error'));
+}
+
+function savePrepare(on) {
+  flow.prepare = on;
+  savingConfig = savingConfig
+    .then(async () => api.saveConfig({ config: { ...(await api.getConfig()), skip_shader_prepare: !on } }))
     .catch((e) => toast(errText(e), 'error'));
 }
 
@@ -334,6 +343,9 @@ const primaryHtml = () => `<button class="btn primary big setup-go" id="primary"
 const GENTLE_ROW = row(t('Slower, keeps the PC usable'), toggle('gentle', false));   // row() numbers its ids: built once, or every draw differs
 // Only before the first setup: an existing cache keeps the storage it has (shaders.rs Job::compact).
 const SMALL_ROW = row(t('Packed shader files (about 20 GB smaller)'), toggle('small', true));
+// Only where the game can prepare its shaders (host.rs prepares_shaders, not on macOS).
+const PREPARE_ROW = row(t('Prepare shaders for this graphics card (less stutter, longer first setup)'), toggle('prepare', true));
+const prepareRow = (s) => (s.app.prepares_shaders ? PREPARE_ROW : '');
 const logButton = () => `<button class="btn quiet" data-act="log">${icon('file-text')}${esc(t('Open setup log'))}</button>`;
 
 const stepsHtml = () => `<ol class="setup-steps">${STEPS.map((name, i) => `<li>
@@ -396,7 +408,7 @@ const VIEWS = {
     return `<h1>${esc(flow.again || kind === 'mods' ? t('Set up again') : finish ? t('Finish the update') : kind === 'resume' ? t('Continue setup') : t('Set up the game'))}</h1>
       ${filesHtml(s)}
       ${finish || !['setup', 'resume', 'ready'].includes(kind) ? `<p class="setup-line">${esc(fromBackend(s.app.readiness.detail))}</p>` : ''}
-      <div class="setup-options">${kind === 'setup' ? SMALL_ROW : ''}${GENTLE_ROW}</div>
+      <div class="setup-options">${kind === 'setup' ? SMALL_ROW : ''}${prepareRow(s)}${GENTLE_ROW}</div>
       ${primaryHtml()}
       <p class="faint num setup-fact" id="fact"></p>
       ${flow.again ? `<button class="btn quiet sm setup-link" data-act="not-again">${esc(t('Cancel'))}</button>` : ''}
@@ -406,7 +418,7 @@ const VIEWS = {
   paused: (s) => `<h1>${esc(t('Setup paused'))}</h1>
     ${filesHtml(s)}
     <p class="setup-line">${esc(t('Finished work is kept.'))}</p>
-    <div class="setup-options">${GENTLE_ROW}</div>
+    <div class="setup-options">${prepareRow(s)}${GENTLE_ROW}</div>
     ${primaryHtml()}
     <p class="faint num setup-fact" id="fact"></p>
     <div class="setup-link">${logButton()}</div>`,
@@ -470,6 +482,8 @@ export function render(el, ctx) {
     if (gentle) gentle.checked = flow.gentle;
     const small = part('small');
     if (small) small.checked = flow.small;
+    const prepare = part('prepare');
+    if (prepare) prepare.checked = flow.prepare;
     const fact = part('fact');
     if (fact) fact.textContent = factOf(s, view);
 
@@ -531,6 +545,7 @@ export function render(el, ctx) {
   });
   panel.addEventListener('change', (e) => {
     if (e.target.id === 'small') return saveSmall(e.target.checked);
+    if (e.target.id === 'prepare') return savePrepare(e.target.checked);
     if (e.target.id !== 'gentle') return;
     saveGentle(e.target.checked);
     draw();

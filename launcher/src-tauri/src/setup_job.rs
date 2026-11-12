@@ -178,8 +178,10 @@ pub fn start_setup(app: AppHandle, state: SetupArg, gentle: Option<bool>) -> Res
             let tools = shaders::find_tools(&tools_dir)?;
             // a finished cache of the same romfs has nothing left to translate (re-extracting would only find that out)
             let same = shaders::read_marker(&job.game_dir).romfs == job.romfs_key();
-            // a cache finished before the extract wrote the program list extracts once more for it (nothing is translated again)
-            let done = same && shaders::is_complete(&job.game_dir) && shader_prepare::programs_file(&job.game_dir).is_file();
+            // a cache finished before the extract wrote the program list extracts once more for it (nothing is translated again),
+            // unless the preparation that reads the list is off
+            let list_ok = cfg.skip_shader_prepare || shader_prepare::programs_file(&job.game_dir).is_file();
+            let done = same && shaders::is_complete(&job.game_dir) && list_ok;
             if !done && !shaders::run(&job, &tools, &st.cancel, |p| emit(p))? {
                 return Ok(false);
             }
@@ -193,6 +195,9 @@ pub fn start_setup(app: AppHandle, state: SetupArg, gentle: Option<bool>) -> Res
             });
             if shaders::prepare(&job.game_dir, &tools_dir, &st.cancel)?.is_none() {
                 return Ok(false);
+            }
+            if cfg.skip_shader_prepare {
+                return Ok(true);
             }
             Ok(shader_prepare::set_up_phase(&job.game_dir, &st.cancel, job.idle, job.log.as_ref(), &mut |phase, done, total, message| {
                 emit(shaders::Progress { state: RunState::Running, phase: phase.into(), done, total, message: message.into() })

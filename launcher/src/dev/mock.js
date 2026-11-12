@@ -371,7 +371,7 @@ function handle(cmd, args) {
   if (sc.down && cmd !== 'get_releases') throw 'The launcher backend did not answer.';
   switch (cmd) {
     case 'launcher_state':
-      return { readiness, game_dir: GAME_DIR, default_game_dir: GAME_DIR, exe_exists: sc.exe_exists, builds_exe: true, dump: sc.dump, version: sc.version || '0.7.0', updated: !!sc.updated };
+      return { readiness, game_dir: GAME_DIR, default_game_dir: GAME_DIR, exe_exists: sc.exe_exists, builds_exe: true, dump: sc.dump, version: sc.version || '0.7.0', updated: !!sc.updated, prepares_shaders: true };
     case 'setup_status': return structuredClone(setup);
     case 'game_status': return game;
     case 'get_releases': return { releases: sc.releases ?? (mockChannel === 'testing' ? [{ ...release('v0.8.1-beta.2', 'Pokopia Recomp 0.8.1-beta.2 (Testing)', '2026-11-12T12:00:00Z'), prerelease: true }, { ...release('v0.8.1-beta.1', 'Pokopia Recomp 0.8.1-beta.1 (Testing)', '2026-11-10T12:00:00Z'), prerelease: true }, ...(sc.update ? [NEXT, ...RELEASES] : RELEASES)] : (sc.update ? [NEXT, ...RELEASES] : RELEASES)), update: sc.update ? { tag: NEXT.tag, name: NEXT.name, url: NEXT.url, size: 148_000_000 } : null };

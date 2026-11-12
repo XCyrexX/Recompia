@@ -222,6 +222,8 @@ pub struct LauncherState {
     pub version: String,
     /// this is the first look after a self-update restart
     pub updated: bool,
+    /// Set up can prepare the shaders on this platform (host::prepares_shaders): the Set up page offers the switch
+    pub prepares_shaders: bool,
 }
 
 /// What the page's main button is built from. The same checks as Play, off the UI thread: they read the disk and can start Python.
@@ -230,7 +232,7 @@ pub async fn launcher_state(app: AppHandle) -> Result<LauncherState, String> {
     tauri::async_runtime::spawn_blocking(move || {
         let cfg = load_config(&app);
         let probe = readiness(&cfg);
-        LauncherState { readiness: probe.readiness, overview: overview_of(&cfg), dump: probe.dump, version: app.package_info().version.to_string(), updated: UPDATED.swap(false, Ordering::SeqCst) }
+        LauncherState { readiness: probe.readiness, overview: overview_of(&cfg), dump: probe.dump, version: app.package_info().version.to_string(), updated: UPDATED.swap(false, Ordering::SeqCst), prepares_shaders: crate::host::prepares_shaders() }
     })
     .await
     .map_err(|e| e.to_string())
