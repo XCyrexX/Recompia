@@ -129,6 +129,8 @@ if(PKP_RT_DLL)
     target_compile_options(pkp_rt PRIVATE "-ffile-prefix-map=${PKP_ROOT}=.")
     add_custom_command(TARGET pkp_rt POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
         "${PKP_RUNTIME_DIR}/assets/fonts/DejaVuSans.ttf" "$<TARGET_FILE_DIR:pkp_rt>/fonts/DejaVuSans.ttf")
+    add_custom_command(TARGET pkp_rt POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        "${PKP_RUNTIME_DIR}/assets/fonts/MPLUSRounded1c-Medium.ttf" "$<TARGET_FILE_DIR:pkp_rt>/fonts/MPLUSRounded1c-Medium.ttf")
     if(WIN32)   # astcdec-*-shared.dll is the Windows decoder; macOS samples ASTC in Metal, Linux decodes with the static astcenc
         file(GLOB PKP_A2B_DLLS "${NXRT_A2B_DIR}/astcdec-*-shared.dll")
         foreach(dll ${PKP_A2B_DLLS})
@@ -148,6 +150,8 @@ if(PKP_RT_DLL)
         set_target_properties(pkp PROPERTIES BUILD_RPATH "@executable_path" INSTALL_RPATH "@executable_path")
         add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${PKP_RUNTIME_DIR}/assets/fonts/DejaVuSans.ttf" "$<TARGET_FILE_DIR:pkp>/fonts/DejaVuSans.ttf")
+        add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${PKP_RUNTIME_DIR}/assets/fonts/MPLUSRounded1c-Medium.ttf" "$<TARGET_FILE_DIR:pkp>/fonts/MPLUSRounded1c-Medium.ttf")
         add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:pkp>/prompts"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${PKP_RUNTIME_DIR}/assets/prompts/prompt_icons.pak" "$<TARGET_FILE_DIR:pkp>/prompts/prompt_icons.pak")
@@ -167,6 +171,8 @@ if(PKP_RT_DLL)
         target_link_options(pkp PRIVATE "-Wl,-z,stack-size=134217728")
         add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${PKP_RUNTIME_DIR}/assets/fonts/DejaVuSans.ttf" "$<TARGET_FILE_DIR:pkp>/fonts/DejaVuSans.ttf")
+        add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+            "${PKP_RUNTIME_DIR}/assets/fonts/MPLUSRounded1c-Medium.ttf" "$<TARGET_FILE_DIR:pkp>/fonts/MPLUSRounded1c-Medium.ttf")
         add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:pkp>/prompts"
             COMMAND ${CMAKE_COMMAND} -E copy_if_different
             "${PKP_RUNTIME_DIR}/assets/prompts/prompt_icons.pak" "$<TARGET_FILE_DIR:pkp>/prompts/prompt_icons.pak")
@@ -219,8 +225,11 @@ endif()
 # The ASTC decoder DLLs astc2bc7 loads at run time (NVN textures in ASTC are transcoded to BC7 on first use): next to pkp.exe.
 # (NXRT_A2B_DIR is the tools/textures build folder the runtime links its transcoder from: cmake/gfx.cmake)
 # The shared-font fallback (runtime src/services/pl.cpp looks in fonts\ next to the exe): without any font the game crashes at boot.
+# The overlay's font, M PLUS Rounded 1c (src/gfx/overlay.cpp), goes to the same folder.
 add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
     "${PKP_RUNTIME_DIR}/assets/fonts/DejaVuSans.ttf" "$<TARGET_FILE_DIR:pkp>/fonts/DejaVuSans.ttf")
+add_custom_command(TARGET pkp POST_BUILD COMMAND ${CMAKE_COMMAND} -E copy_if_different
+    "${PKP_RUNTIME_DIR}/assets/fonts/MPLUSRounded1c-Medium.ttf" "$<TARGET_FILE_DIR:pkp>/fonts/MPLUSRounded1c-Medium.ttf")
 
 # The prompt icon pack (runtime src/gfx/play/prompts.cpp: 598 36x36 RGBA icons, xbox/ps/steam/deck/kbm): the button prompts
 # replace the game's icon textures with these. Without it the game's own icons stay ("no icon pack (prompt_icons.pak) found").

@@ -1048,15 +1048,16 @@ def link(runner, lib, out, env):
             if os.path.isfile(vulkan):
                 beside(vulkan, 'libvulkan.1.dylib')
         # What the game reads next to its executable: the keyboard and mouse prompt icons (pkp_kbm.cpp, without them the
-        # prompts keep the game's own Switch sprites) and the shared font.
+        # prompts keep the game's own Switch sprites), the shared font and the overlay's font (overlay.cpp).
         icons = os.path.join(SDK, 'kbm_icons')
         if os.path.isdir(icons):
             for f in sorted(os.listdir(icons)):
                 if f.endswith('.png'):
                     beside(os.path.join(icons, f), 'assets/kbm_icons/' + f)
-        font = os.path.join(SDK, 'fonts', 'DejaVuSans.ttf')
-        if os.path.isfile(font):
-            beside(font, 'fonts/DejaVuSans.ttf')
+        for name in ('DejaVuSans.ttf', 'MPLUSRounded1c-Medium.ttf'):
+            font = os.path.join(SDK, 'fonts', name)
+            if os.path.isfile(font):
+                beside(font, 'fonts/' + name)
     built = out.at(MOD_BUILT)                           # the mod hook points this pkp.exe has, for the runtime
     shutil.copyfile(os.path.join(lib, MOD_BUILT), built + '.tmp')
     flush_replace(built + '.tmp', built)

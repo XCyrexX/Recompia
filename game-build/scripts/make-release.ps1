@@ -64,6 +64,9 @@ Put "$root\game-build\res\pkp.rc" 'tools\build\sdk\pkp.rc'
 foreach ($f in 'pkp_build.py', 'dump_hashes.json', 'fetch_dlss.py') { Put "$root\game-build\release_b\$f" "tools\build\$f" }
 (Get-Content -Raw "$root\game-build\release_b\README.txt").Replace('@VERSION@', $Version) | Set-Content -NoNewline (Join-Path $pkg 'README.txt')
 Put "$root\game-build\release_b\BUNDLED_TOOLS.txt" 'licenses\BUNDLED_TOOLS.txt'
+# the overlay's font (runtime src/gfx/overlay.cpp looks in fonts\ next to pkp.exe): not in the base payload, so from the checkout
+Put "$root\runtime\assets\fonts\MPLUSRounded1c-Medium.ttf" 'fonts\MPLUSRounded1c-Medium.ttf'
+Put "$root\runtime\assets\fonts\LICENSE-MPLUSRounded1c.txt" 'licenses\LICENSE-MPLUSRounded1c.txt'
 Put "$root\launcher\release\Play.bat" 'Play.bat'
 Put "$root\LICENSE" 'LICENSE.txt'
 Put "$root\CHANGELOG.md" 'CHANGELOG.txt'

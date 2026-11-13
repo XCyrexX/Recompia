@@ -2,11 +2,29 @@
 // Dear ImGui overlay (declarations in include/nxrt/overlay.h). ImGui and its Vulkan backend are pinned in cmake/gfx_deps.cmake.
 #include "overlay_impl.h"
 
+#include "nxrt/host_files.h"
 #include "nxrt/notices.h"
 
 namespace nxrt::gfx {
 using namespace overlay_detail;
 namespace {
+
+// The overlay's text (the on-screen keyboard, the quit prompt, the F1 page, the HUD) in M PLUS Rounded 1c Medium (SIL OFL 1.1,
+// runtime/assets/fonts), a rounded face nearer the game's own text than ImGui's: Latin, Greek, Cyrillic, kana, about 5,000 kanji.
+// Since ImGui 1.92 the sources merged into one font are asked in order for a glyph (docs/FONTS.md), so DejaVu Sans (the release's
+// shared-font fallback, src/services/pl.cpp) answers what M PLUS lacks and the built-in vector font the rest; with neither file
+// the built-in font is the whole font, as before.
+void add_fonts(ImGuiIO& io) {
+    ImFontConfig cfg;
+    for (const char* name : {"MPLUSRounded1c-Medium.ttf", "DejaVuSans.ttf"}) {
+        const std::filesystem::path p = host_asset("fonts", name);
+        if (p.empty()) continue;
+        const std::u8string u8 = p.u8string();   // ImGui opens files by UTF-8 name, also on Windows
+        if (io.Fonts->AddFontFromFileTTF(reinterpret_cast<const char*>(u8.c_str()), 0.0f, &cfg)) cfg.MergeMode = true;
+        else NXLOG_W(kTag, "overlay font %s could not be loaded", p.string().c_str());
+    }
+    io.Fonts->AddFontDefaultVector(&cfg);   // the scalable built-in font: stays sharp at every UI scale (update_scale)
+}
 
 ImGuiKey map_key(int sc) {
     if (sc >= SDL_SCANCODE_A && sc <= SDL_SCANCODE_Z) return static_cast<ImGuiKey>(ImGuiKey_A + (sc - SDL_SCANCODE_A));
@@ -102,7 +120,7 @@ std::unique_ptr<Overlay> Overlay::create(const Context& ctx, std::string* error)
     io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard | ImGuiConfigFlags_NavEnableGamepad;
     io.BackendFlags |= ImGuiBackendFlags_HasGamepad;   // without it ImGui ignores the gamepad keys that set_keyboard_pad sends while the page is open
     ImGui::StyleColorsDark();
-    io.Fonts->AddFontDefaultVector();          // the scalable default font: stays sharp at every UI scale (update_scale)
+    add_fonts(io);
     ImGui::GetStyle().FontSizeBase = 16.0f;
     s.base_style = ImGui::GetStyle();
     const VkExtent2D e = ctx.renderer->extent();

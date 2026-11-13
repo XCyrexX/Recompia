@@ -37,13 +37,15 @@ cp "$repo/game-build/src/pkp_stub.cpp" "$repo/game-build/src/pkp_rt_api.h" "$out
 # which is where volk looks for libvulkan.1.dylib.
 cp "$moltenvk/libMoltenVK.dylib" "$out/tools/build/sdk/libvulkan.1.dylib"
 cp "$moltenvk/LICENSE" "$out/tools/build/sdk/LICENSE-MoltenVK.txt"
-# What the game reads next to pkp: the prompt icons (generated here when the work folder does not have them) and the font.
+# What the game reads next to pkp: the prompt icons (generated here when the work folder does not have them) and the fonts (the
+# shared-font fallback and the overlay's).
 if [ ! -d "$repo/work/assets/kenney_input_prompts" ]; then
     python3 "$repo/tools/kbm_icons.py" >/dev/null
 fi
 mkdir -p "$out/tools/build/sdk/kbm_icons" "$out/tools/build/sdk/fonts"
 cp "$repo/work/assets/kenney_input_prompts/Keyboard & Mouse/Default/"*.png "$out/tools/build/sdk/kbm_icons/"
-cp "$repo/runtime/assets/fonts/DejaVuSans.ttf" "$out/tools/build/sdk/fonts/"
+cp "$repo/runtime/assets/fonts/DejaVuSans.ttf" "$repo/runtime/assets/fonts/MPLUSRounded1c-Medium.ttf" \
+   "$repo/runtime/assets/fonts/LICENSE-MPLUSRounded1c.txt" "$out/tools/build/sdk/fonts/"
 cp "$repo/runtime/cmake/guest_segment.py" "$out/tools/build/sdk/"
 # No Python in the bundle: Set up fetches python-build-standalone and the lz4 and capstone wheels into tools/macos, as the
 # Linux package does (host.rs prepare_tools). macOS compiles with the Apple clang of the Command Line Tools.

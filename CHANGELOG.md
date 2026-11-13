@@ -2,6 +2,9 @@
 
 ## Unreleased
 
+### Changed
+- **A rounder font for the on-screen keyboard, the quit prompt and the F1 page**: M PLUS Rounded 1c in place of ImGui's blocky default, closer to the game's own text, and with Japanese. Update only on Windows; **Set up again** on Linux and macOS places the font next to the game (no shader rebuild; shaders and saves are kept)
+
 ### Fixed
 - On Linux and macOS the game got empty stand-ins for the Switch's system fonts: `fonts/DejaVuSans.ttf` next to the game was looked for on Windows only. **Set up again**; no shader rebuild
 - An update no longer stops with "The prepared game code cannot be put in place (this release changes lifter)" in a game folder first installed from 0.9.0 or older

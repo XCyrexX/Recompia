@@ -46,15 +46,16 @@ cp "$repo/tools/shaders/ampere/extract_corpus.py" "$pkg/tools/shaders/"
 cp -R "$harness" "$pkg/tools/harness"
 chmod +x "$pkg/tools/harness/spirv_harness"   # the launcher runs the apphost itself, so it needs the mode
 
-# what the game reads next to pkp: the keyboard and mouse prompt icons and the shared font (pkp_build.py copies both)
+# what the game reads next to pkp: the keyboard and mouse prompt icons, the shared font and the overlay's font (pkp_build.py copies them)
 mkdir -p "$pkg/tools/build/sdk/kbm_icons" "$pkg/tools/build/sdk/fonts"
 python3 "$repo/tools/kbm_icons.py" >/dev/null
 cp "$repo/work/assets/kenney_input_prompts/Keyboard & Mouse/Default/"*.png "$pkg/tools/build/sdk/kbm_icons/"
-cp "$repo/runtime/assets/fonts/DejaVuSans.ttf" "$pkg/tools/build/sdk/fonts/"
+cp "$repo/runtime/assets/fonts/DejaVuSans.ttf" "$repo/runtime/assets/fonts/MPLUSRounded1c-Medium.ttf" "$pkg/tools/build/sdk/fonts/"
 cp -R "$repo/runtime/assets/prompts" "$pkg/assets/prompts"
 
 # licences and documents
 cp "$repo/game-build/release_b/BUNDLED_TOOLS.txt" "$pkg/licenses/"
+cp "$repo/runtime/assets/fonts/LICENSE-MPLUSRounded1c.txt" "$pkg/licenses/"
 cp "$repo/LICENSE" "$pkg/LICENSE.txt"
 cp "$repo/CHANGELOG.md" "$pkg/CHANGELOG.txt"
 sed "s/@VERSION@/$version/g" "$repo/game-build/release_b/README.linux.txt" > "$pkg/README.txt"
