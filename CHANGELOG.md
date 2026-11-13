@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Fixed
+- On Linux and macOS the game got empty stand-ins for the Switch's system fonts: `fonts/DejaVuSans.ttf` next to the game was looked for on Windows only. **Set up again**; no shader rebuild
 - An update no longer stops with "The prepared game code cannot be put in place (this release changes lifter)" in a game folder first installed from 0.9.0 or older
 
 ## 0.13.0 (build Q: Quokka)

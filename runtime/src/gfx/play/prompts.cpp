@@ -3,7 +3,7 @@
 //
 // Pack file layout (scripts/build_prompt_pack.py), little endian: 24-byte header (magic "MPIP", version 1, count, width, height,
 // reserved), `count` directory entries of 48 bytes (char name[40], u32 offset, u32 size) sorted by name, then the RGBA8 pixel blocks.
-#include <windows.h>   // compat/windows.h on POSIX: MAX_PATH, DWORD and the GetModuleFileNameA shim
+#include "nxrt/host_files.h"
 
 #include "prompts.h"
 
@@ -26,15 +26,6 @@ namespace {
 constexpr const char* kTag = "prompts";
 
 uint32_t get_u32(const uint8_t* p) { return uint32_t(p[0]) | (uint32_t(p[1]) << 8) | (uint32_t(p[2]) << 16) | (uint32_t(p[3]) << 24); }
-
-std::filesystem::path exe_dir() {
-    // GetModuleFileNameA is the shim's own on POSIX (_NSGetExecutablePath), so the icon pack is looked for next to the exe
-    // there too (assets/prompts/prompt_icons.pak under <exe folder>/prompts).
-    char buf[MAX_PATH] = {};
-    const DWORD n = GetModuleFileNameA(nullptr, buf, MAX_PATH);
-    if (n == 0 || n >= MAX_PATH) return {};
-    return std::filesystem::path(buf).parent_path();
-}
 
 bool read_file(const std::filesystem::path& p, std::vector<uint8_t>& out) {
     out.clear();
@@ -140,7 +131,7 @@ const IconPack* prompts_pack() {
         std::vector<std::filesystem::path> cands;
         const std::string dir = config_get_str("prompts", "dir", "");
         if (!dir.empty()) cands.push_back(std::filesystem::path(dir) / "prompt_icons.pak");
-        const std::filesystem::path ex = exe_dir();
+        const std::filesystem::path ex = host_exe_dir();   // also on POSIX: the icon pack is looked for next to the exe there too
         if (!ex.empty()) cands.push_back(ex / "prompts" / "prompt_icons.pak");
         std::error_code ec;
         cands.push_back(std::filesystem::current_path(ec) / "assets" / "prompts" / "prompt_icons.pak");

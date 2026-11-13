@@ -31,6 +31,7 @@
 #include <vector>
 
 #include "nxrt/config.h"
+#include "nxrt/host_files.h"
 #include "nxrt/ipc.h"
 #include "nxrt/log.h"
 #include "nxrt/services.h"
@@ -113,26 +114,12 @@ bool decode_bfttf(const std::vector<uint8_t>& raw, std::vector<uint8_t>& out) {
     return true;
 }
 
-std::filesystem::path exe_dir() {
-#ifdef _WIN32
-    char buf[MAX_PATH];
-    const DWORD n = GetModuleFileNameA(nullptr, buf, MAX_PATH);
-    if (n == 0 || n >= MAX_PATH) return {};
-    return std::filesystem::path(buf).parent_path();
-#else
-    return {};
-#endif
-}
-
-// The DejaVu Sans fallback: the first existing candidate wins.
+// The DejaVu Sans fallback: [pl] font_dir first, then the release's own copy (host_asset: fonts/ next to the exe, also on Linux and
+// macOS, where Set up places it; assets/fonts/ under the working directory; the exe's folder). The first existing candidate wins.
 std::vector<uint8_t> load_fallback(const std::filesystem::path& dir) {
-    std::error_code ec;
     std::vector<std::filesystem::path> cands;
     if (!dir.empty()) cands.push_back(dir / "DejaVuSans.ttf");
-    const std::filesystem::path ex = exe_dir();
-    if (!ex.empty()) cands.push_back(ex / "fonts" / "DejaVuSans.ttf");
-    cands.push_back(std::filesystem::current_path(ec) / "assets" / "fonts" / "DejaVuSans.ttf");
-    if (!ex.empty()) cands.push_back(ex / "DejaVuSans.ttf");
+    if (auto p = host_asset("fonts", "DejaVuSans.ttf"); !p.empty()) cands.push_back(p);
     for (const auto& p : cands) {
         std::vector<uint8_t> v;
         if (read_file(p, v)) {
